@@ -27,6 +27,7 @@ model Game {
   roomId   String   @default(uuid())
   roomUrl  String
   users    User[]
-  move     String
+  winner   String?
+  gameCode String
 }
 

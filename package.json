@@ -4,7 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "npm run dev:backend && npm run dev:frontend",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "build": "cd backend && npm run build && cd ../frontend && npm run build"
   },
   "keywords": [],
   "author": "",
@@ -12,7 +17,9 @@
   "dependencies": {
     "@prisma/client": "^6.17.1",
     "@prisma/extension-accelerate": "^2.0.2",
-    "vite": "^7.1.10"
+    "@types/express": "^5.0.3",
+    "vite": "^7.1.10",
+    "concurrently": "^8.2.2"
   },
   "devDependencies": {
     "prisma": "^6.17.1"

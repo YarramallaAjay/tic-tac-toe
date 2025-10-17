@@ -13,8 +13,8 @@
 
     /* Output Options */
     "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
+    "declaration": false,
+    "declarationMap": false,
 
     /* Strict Type Checks */
     "strict": true,

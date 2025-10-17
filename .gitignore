@@ -81,3 +81,4 @@ __snapshots__/
 *.bak
 *.orig
 
+.qodo
