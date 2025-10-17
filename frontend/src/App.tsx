@@ -44,6 +44,7 @@ function App() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
+  const [chatOpen, setChatOpen] = useState(true);
 
   // Initialize socket connection
   useEffect(() => {
@@ -328,63 +329,91 @@ function App() {
 
   const renderGame = () => (
     <div className="game-container">
-      <div className="game">
-        <div className="game-header">
-          <h2>Game Code: {currentGame?.gameCode}</h2>
-          <p>You are: <span className="symbol-badge">{currentUser?.symbol}</span></p>
-          <p>Current Turn: <span className={`symbol-badge ${currentGame?.currentPlayer === currentUser?.symbol ? 'active' : ''}`}>{currentGame?.currentPlayer}</span></p>
+      {/* Left Panel - Game Details */}
+      <div className="game-details">
+        <div className="detail-section">
+          <h3>Game Info</h3>
+          <div className="detail-item">
+            <span className="detail-label">Game Code:</span>
+            <span className="detail-value">{currentGame?.gameCode}</span>
+          </div>
+          <div className="detail-item">
+            <span className="detail-label">You are:</span>
+            <span className="symbol-badge">{currentUser?.symbol}</span>
+          </div>
+          <div className="detail-item">
+            <span className="detail-label">Current Turn:</span>
+            <span className={`symbol-badge ${currentGame?.currentPlayer === currentUser?.symbol ? 'active' : ''}`}>
+              {currentGame?.currentPlayer}
+            </span>
+          </div>
         </div>
 
-        <div className="players">
-          <div className={`player ${currentGame?.currentPlayer === 'X' ? 'active-player' : ''}`}>
-            <span>❌ {currentGame?.users.find(u => u.symbol === 'X')?.name || 'Waiting...'}</span>
+        <div className="detail-section">
+          <h3>Players</h3>
+          <div className={`player-item ${currentGame?.currentPlayer === 'X' ? 'active-player' : ''}`}>
+            <span className="player-symbol">X</span>
+            <span className="player-name">{currentGame?.users.find(u => u.symbol === 'X')?.name || 'Waiting...'}</span>
           </div>
-          <div className={`player ${currentGame?.currentPlayer === 'O' ? 'active-player' : ''}`}>
-            <span>⭕ {currentGame?.users.find(u => u.symbol === 'O')?.name || 'Waiting...'}</span>
+          <div className={`player-item ${currentGame?.currentPlayer === 'O' ? 'active-player' : ''}`}>
+            <span className="player-symbol">O</span>
+            <span className="player-name">{currentGame?.users.find(u => u.symbol === 'O')?.name || 'Waiting...'}</span>
           </div>
         </div>
 
-        {renderBoard()}
+        {gameState === 'game-over' && (
+          <div className="game-over-section">
+            <h3>{message}</h3>
+            <button onClick={resetGame} className="play-again-btn">Play Again</button>
+          </div>
+        )}
+      </div>
 
+      {/* Center Panel - Game Board */}
+      <div className="game-board-container">
         {gameState === 'waiting' && (
           <div className="waiting">
             <p>Waiting for another player to join...</p>
             <p>Share this code: <strong>{currentGame?.gameCode}</strong></p>
           </div>
         )}
-
-        {gameState === 'game-over' && (
-          <div className="game-over">
-            <h3>{message}</h3>
-            <button onClick={resetGame}>Play Again</button>
-          </div>
-        )}
+        {renderBoard()}
       </div>
 
-      {/* Chat Window */}
+      {/* Right Panel - Chat Window */}
       {gameState !== 'waiting' && (
-        <div className="chat-window">
-          <div className="chat-header">
-            <h3>Chat</h3>
-          </div>
-          <div className="chat-messages">
-            {chatMessages.map((msg, index) => (
-              <div key={index} className={`chat-message ${msg.sender === currentUser?.name ? 'own-message' : ''}`}>
-                <strong>{msg.sender}:</strong> {msg.message}
+        <div className={`chat-container ${chatOpen ? 'open' : 'closed'}`}>
+          {!chatOpen && (
+            <button className="chat-toggle" onClick={() => setChatOpen(true)}>
+              💬
+            </button>
+          )}
+          {chatOpen && (
+            <div className="chat-window">
+              <div className="chat-header">
+                <h3>Chat</h3>
+                <button className="close-chat" onClick={() => setChatOpen(false)}>✕</button>
               </div>
-            ))}
-          </div>
-          <div className="chat-input-container">
-            <input
-              type="text"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
-              placeholder="Type a message..."
-              className="chat-input"
-            />
-            <button onClick={sendChatMessage} className="send-btn">Send</button>
-          </div>
+              <div className="chat-messages">
+                {chatMessages.map((msg, index) => (
+                  <div key={index} className={`chat-message ${msg.sender === currentUser?.name ? 'own-message' : ''}`}>
+                    <strong>{msg.sender}:</strong> {msg.message}
+                  </div>
+                ))}
+              </div>
+              <div className="chat-input-container">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && sendChatMessage()}
+                  placeholder="Type a message..."
+                  className="chat-input"
+                />
+                <button onClick={sendChatMessage} className="send-btn">Send</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

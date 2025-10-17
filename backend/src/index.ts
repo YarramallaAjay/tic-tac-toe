@@ -231,24 +231,33 @@ app.get("/score/:gameId", async (req, res) => {
   }
 })
 
-// Get leaderboard - top users by score
+// Get leaderboard - top users by score (aggregated by name)
 app.get("/leaderboard", async (_req, res) => {
   try {
-    const topUsers = await prisma.user.findMany({
-      orderBy: {
-        score: 'desc'
-      },
-      take: 10,
-      select: {
-        id: true,
-        name: true,
+    // Aggregate scores by user name
+    const aggregatedUsers = await prisma.user.groupBy({
+      by: ['name'],
+      _sum: {
         score: true
-      }
+      },
+      orderBy: {
+        _sum: {
+          score: 'desc'
+        }
+      },
+      take: 10
     })
+
+    // Format the response
+    const leaderboard = aggregatedUsers.map((user, index) => ({
+      id: `${user.name}-${index}`, // Unique ID for frontend
+      name: user.name,
+      score: user._sum.score || 0
+    }))
 
     res.json({
       success: true,
-      leaderboard: topUsers
+      leaderboard: leaderboard
     })
   } catch (error) {
     console.error("Error fetching leaderboard:", error)
