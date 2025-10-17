@@ -294,6 +294,8 @@ function App() {
         <input
           type="text"
           placeholder="Enter your name"
+          required
+          color='black'
           value={playerName}
           onChange={(e) => setPlayerName(e.target.value)}
         />
