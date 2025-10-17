@@ -16,6 +16,7 @@ model User {
   name      String
   gameId    String?
   metadata  String?
+  score     Int     @default(0)
 
   // Relation
   game      Game?   @relation(fields: [gameId], references: [id])

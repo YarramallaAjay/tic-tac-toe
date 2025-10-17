@@ -47,7 +47,7 @@ Create a PostgreSQL database and update the connection string in your environmen
 ```bash
 # Create a .env file in the backend directory
 DATABASE_URL="postgresql://username:password@localhost:5432/tictactoe"
-SERVER_URL="http://localhost:3200"
+SERVER_URL="http://localhost:3100"
 ```
 
 ### 2. Install Dependencies

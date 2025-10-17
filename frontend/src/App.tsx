@@ -18,6 +18,18 @@ interface Game {
   currentPlayer: "X" | "O";
 }
 
+interface LeaderboardEntry {
+  id: string;
+  name: string;
+  score: number;
+}
+
+interface ChatMessage {
+  sender: string;
+  message: string;
+  timestamp: number;
+}
+
 type GameState = 'menu' | 'waiting' | 'playing' | 'game-over';
 
 function App() {
@@ -28,7 +40,10 @@ function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [message, setMessage] = useState('');
-  const [winner, setWinner] = useState<string | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState('');
 
   // Initialize socket connection
   useEffect(() => {
@@ -36,6 +51,7 @@ function App() {
     setSocket(newSocket);
 
     newSocket.on('room-joined', (data) => {
+      console.log('room-joined event received:', data);
       if (data.success) {
         setCurrentGame(data.game);
         setGameState('waiting');
@@ -46,38 +62,81 @@ function App() {
     });
 
     newSocket.on('player-joined', (data) => {
+      console.log('player-joined event received:', data);
       setCurrentGame(data.game);
       if (data.playerCount === 2) {
+        console.log('Setting game state to playing');
         setGameState('playing');
         setMessage('Game started! Your turn to play.');
+      } else {
+        console.log('Player count is not 2, it is:', data.playerCount);
       }
     });
 
     newSocket.on('move-updated', (data) => {
+      console.log('move-updated event received:', data);
       setCurrentGame(data.game);
-      const isMyTurn = data.currentPlayer === currentUser?.symbol;
-      setMessage(isMyTurn ? 'Your turn!' : 'Opponent\'s turn');
+      // Access currentUser from the closure - will use latest value
+      setCurrentUser((user) => {
+        const isMyTurn = data.currentPlayer === user?.symbol;
+        setMessage(isMyTurn ? 'Your turn!' : 'Opponent\'s turn');
+        return user;
+      });
     });
 
     newSocket.on('game-over', (data) => {
-      setWinner(data.winner);
+      console.log('game-over event received:', data);
       setGameState('game-over');
       if (data.winner === 'draw') {
         setMessage('Game ended in a draw!');
       } else {
-        const isWinner = data.winner === currentUser?.symbol;
-        setMessage(isWinner ? 'You won!' : 'You lost!');
+        // Access currentUser from the closure
+        setCurrentUser((user) => {
+          const isWinner = data.winner === user?.symbol;
+          setMessage(isWinner ? 'You won!' : 'You lost!');
+          return user;
+        });
       }
     });
 
     newSocket.on('invalid-move', (data) => {
+      console.log('invalid-move event received:', data);
       setMessage(data.error);
+    });
+
+    newSocket.on('chat-message', (data) => {
+      console.log('chat-message received:', data);
+      setChatMessages(prev => [...prev, {
+        sender: data.sender,
+        message: data.message,
+        timestamp: Date.now()
+      }]);
     });
 
     return () => {
       newSocket.close();
     };
-  }, [currentUser]);
+  }, []); // Empty dependency array - only run once on mount
+
+  // Fetch leaderboard
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const response = await fetch('http://localhost:3100/leaderboard');
+        const data = await response.json();
+        if (data.success) {
+          setLeaderboard(data.leaderboard);
+        }
+      } catch (error) {
+        console.error('Failed to fetch leaderboard:', error);
+      }
+    };
+
+    fetchLeaderboard();
+    // Refresh leaderboard every 30 seconds
+    const interval = setInterval(fetchLeaderboard, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const startGame = async () => {
     if (!playerName.trim()) {
@@ -164,6 +223,18 @@ function App() {
     });
   };
 
+  const sendChatMessage = () => {
+    if (!chatInput.trim() || !currentGame || !currentUser) return;
+
+    socket?.emit('chat-message', {
+      gameCode: currentGame.gameCode,
+      sender: currentUser.name,
+      message: chatInput.trim()
+    });
+
+    setChatInput('');
+  };
+
   const resetGame = () => {
     setGameState('menu');
     setPlayerName('');
@@ -171,7 +242,7 @@ function App() {
     setCurrentGame(null);
     setCurrentUser(null);
     setMessage('');
-    setWinner(null);
+    setChatMessages([]);
   };
 
   const renderBoard = () => {
@@ -192,6 +263,28 @@ function App() {
       </div>
     );
   };
+
+  const renderLeaderboard = () => (
+    <div className="leaderboard-modal" onClick={() => setShowLeaderboard(false)}>
+      <div className="leaderboard-content" onClick={(e) => e.stopPropagation()}>
+        <h2>Leaderboard</h2>
+        <div className="leaderboard-list">
+          {leaderboard.length > 0 ? (
+            leaderboard.map((entry, index) => (
+              <div key={entry.id} className="leaderboard-entry">
+                <span className="rank">#{index + 1}</span>
+                <span className="player-name">{entry.name}</span>
+                <span className="score">{entry.score} pts</span>
+              </div>
+            ))
+          ) : (
+            <p>No players yet. Be the first to play!</p>
+          )}
+        </div>
+        <button onClick={() => setShowLeaderboard(false)} className="close-btn">Close</button>
+      </div>
+    </div>
+  );
 
   const renderMenu = () => (
     <div className="menu">
@@ -225,39 +318,73 @@ function App() {
           Join Game
         </button>
       </div>
+      <div className="button-group" style={{ marginTop: '2rem' }}>
+        <button onClick={() => setShowLeaderboard(true)} className="secondary-btn">
+          View Leaderboard
+        </button>
+      </div>
     </div>
   );
 
   const renderGame = () => (
-    <div className="game">
-      <div className="game-header">
-        <h2>Game Code: {currentGame?.gameCode}</h2>
-        <p>You are: {currentUser?.symbol}</p>
-        <p>Current Player: {currentGame?.currentPlayer}</p>
+    <div className="game-container">
+      <div className="game">
+        <div className="game-header">
+          <h2>Game Code: {currentGame?.gameCode}</h2>
+          <p>You are: <span className="symbol-badge">{currentUser?.symbol}</span></p>
+          <p>Current Turn: <span className={`symbol-badge ${currentGame?.currentPlayer === currentUser?.symbol ? 'active' : ''}`}>{currentGame?.currentPlayer}</span></p>
+        </div>
+
+        <div className="players">
+          <div className={`player ${currentGame?.currentPlayer === 'X' ? 'active-player' : ''}`}>
+            <span>❌ {currentGame?.users.find(u => u.symbol === 'X')?.name || 'Waiting...'}</span>
+          </div>
+          <div className={`player ${currentGame?.currentPlayer === 'O' ? 'active-player' : ''}`}>
+            <span>⭕ {currentGame?.users.find(u => u.symbol === 'O')?.name || 'Waiting...'}</span>
+          </div>
+        </div>
+
+        {renderBoard()}
+
+        {gameState === 'waiting' && (
+          <div className="waiting">
+            <p>Waiting for another player to join...</p>
+            <p>Share this code: <strong>{currentGame?.gameCode}</strong></p>
+          </div>
+        )}
+
+        {gameState === 'game-over' && (
+          <div className="game-over">
+            <h3>{message}</h3>
+            <button onClick={resetGame}>Play Again</button>
+          </div>
+        )}
       </div>
-      
-      <div className="players">
-        <div className="player">
-          <span>Player X: {currentGame?.users.find(u => u.symbol === 'X')?.name || 'Waiting...'}</span>
-        </div>
-        <div className="player">
-          <span>Player O: {currentGame?.users.find(u => u.symbol === 'O')?.name || 'Waiting...'}</span>
-        </div>
-      </div>
 
-      {renderBoard()}
-
-      {gameState === 'waiting' && (
-        <div className="waiting">
-          <p>Waiting for another player to join...</p>
-          <p>Share this code: <strong>{currentGame?.gameCode}</strong></p>
-        </div>
-      )}
-
-      {gameState === 'game-over' && (
-        <div className="game-over">
-          <h3>{message}</h3>
-          <button onClick={resetGame}>Play Again</button>
+      {/* Chat Window */}
+      {gameState !== 'waiting' && (
+        <div className="chat-window">
+          <div className="chat-header">
+            <h3>Chat</h3>
+          </div>
+          <div className="chat-messages">
+            {chatMessages.map((msg, index) => (
+              <div key={index} className={`chat-message ${msg.sender === currentUser?.name ? 'own-message' : ''}`}>
+                <strong>{msg.sender}:</strong> {msg.message}
+              </div>
+            ))}
+          </div>
+          <div className="chat-input-container">
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
+              placeholder="Type a message..."
+              className="chat-input"
+            />
+            <button onClick={sendChatMessage} className="send-btn">Send</button>
+          </div>
         </div>
       )}
     </div>
@@ -270,8 +397,10 @@ function App() {
           {message}
         </div>
       )}
-      
+
       {gameState === 'menu' ? renderMenu() : renderGame()}
+
+      {showLeaderboard && renderLeaderboard()}
     </div>
   );
 }

@@ -1,172 +1,264 @@
-import express from "express";
-import { PrismaClient } from "../prisma/generated/prisma/client.js";
-import { randomUUID } from "crypto";
-import { server } from "./SocketHandler.js";
+import Express from 'express'
+import gameStartSchema, { gameJoinSchema } from './validations.js'
+import { PrismaClient } from '../prisma/generated/prisma/client.js'
+import cors from 'cors'
+import { randomUUID } from 'crypto'
 
-const app = express();
-const prisma = new PrismaClient();
+const app = Express()
+
+const prisma = new PrismaClient()
 
 // Middleware
-app.use(express.json());
+app.use(cors({
+  origin: "http://localhost:5173"
+}))
+app.use(Express.json())
 
-// Health check endpoint
-app.get("/health", async (req, res) => {
-    res.json({
-        'Health': process.connected,
-        'Status': 'OK'
-    });
-});
-
-// Start game endpoint - creates user and game
-app.post("/start", async (req, res) => {
-    try {
-        const { name } = req.body;
-        
-        if (!name) {
-            return res.status(400).json({ error: "Name is required" });
-        }
-
-        // Check if user exists, if not create new user
-        let user = await prisma.user.findFirst({
-            where: { name }
-        });
-
-        if (!user) {
-            user = await prisma.user.create({
-                data: { name }
-            });
-        }
-
-        // Generate game code and create game
-        const gameCode = generateGameCode();
-        const gameId = randomUUID();
-        const gameUrl = `${process.env.SERVER_URL || "http://localhost:3200"}/game/${gameCode}`;
-
-        const game = await prisma.game.create({
-            data: {
-                id: gameId,
-                state: "_________",
-                gameCode,
-                roomUrl: gameUrl,
-                users: {
-                    connect: { id: user.id }
-                }
-            }
-        });
-
-        res.json({
-            success: true,
-            user: { id: user.id, name: user.name },
-            game: {
-                id: game.id,
-                gameCode: game.gameCode,
-                gameUrl: game.roomUrl,
-                state: game.state
-            }
-        });
-
-    } catch (error) {
-        console.error("Error starting game:", error);
-        res.status(500).json({ error: "Failed to start game" });
-    }
-});
-
-// Join game endpoint
-app.post("/join", async (req, res) => {
-    try {
-        const { name, gameCode } = req.body;
-        
-        if (!name || !gameCode) {
-            return res.status(400).json({ error: "Name and game code are required" });
-        }
-
-        // Check if user exists, if not create new user
-        let user = await prisma.user.findFirst({
-            where: { name }
-        });
-
-        if (!user) {
-            user = await prisma.user.create({
-                data: { name }
-            });
-        }
-
-        // Find game by game code
-        const game = await prisma.game.findFirst({
-            where: { gameCode },
-            include: { users: true }
-        });
-
-        if (!game) {
-            return res.status(404).json({ error: "Game not found" });
-        }
-
-        if (game.users.length >= 2) {
-            return res.status(400).json({ error: "Game is full" });
-        }
-
-        // Add user to game
-        await prisma.game.update({
-            where: { id: game.id },
-            data: {
-                users: {
-                    connect: { id: user.id }
-                }
-            }
-        });
-
-        res.json({
-            success: true,
-            user: { id: user.id, name: user.name },
-            game: {
-                id: game.id,
-                gameCode: game.gameCode,
-                gameUrl: game.roomUrl,
-                state: game.state,
-                playerCount: game.users.length + 1
-            }
-        });
-
-    } catch (error) {
-        console.error("Error joining game:", error);
-        res.status(500).json({ error: "Failed to join game" });
-    }
-});
-
-// Get game score/state
-app.get("/score/:gameId", async (req, res) => {
-    try {
-        const { gameId } = req.params;
-        
-        const game = await prisma.game.findUnique({
-            where: { id: gameId },
-            include: { users: true }
-        });
-
-        if (!game) {
-            return res.status(404).json({ error: "Game not found" });
-        }
-
-        res.json({
-            success: true,
-            game: {
-                id: game.id,
-                state: game.state,
-                winner: game.winner,
-                users: game.users
-            }
-        });
-
-    } catch (error) {
-        console.error("Error getting game score:", error);
-        res.status(500).json({ error: "Failed to get game score" });
-    }
-});
-
-// Helper function to generate game code
+// Helper function to generate a unique game code
 function generateGameCode(): string {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
 }
 
-// The server is already started in SocketHandler.ts
-export default app;
+// Health check endpoint
+app.get("/health", async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({
+      health: 'ok',
+      database: 'connected'
+    })
+  } catch (error) {
+    res.status(500).json({
+      health: 'error',
+      database: 'disconnected'
+    })
+  }
+})
+
+// Start a new game
+app.post("/start", async (req, res) => {
+  try {
+    const result = gameStartSchema.safeParse(req.body)
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid input",
+        details: result.error.issues
+      })
+    }
+
+    const { name } = result.data
+    const gameId = randomUUID()
+    const gameCode = generateGameCode()
+    const userId = randomUUID()
+    const baseUrl = process.env.SERVER_URL || "http://localhost:3100"
+
+    // Create game in database
+    const game = await prisma.game.create({
+      data: {
+        id: gameId,
+        state: "_________", // 9 empty cells
+        gameCode: gameCode,
+        roomUrl: `${baseUrl}/game/${gameCode}`,
+        users: {
+          create: {
+            id: userId,
+            name: name
+          }
+        }
+      },
+      include: {
+        users: true
+      }
+    })
+
+    // Return user and game data
+    res.json({
+      success: true,
+      user: {
+        id: userId,
+        name: name,
+        symbol: "X" // First player is always X
+      },
+      game: {
+        gameId: game.id,
+        gameCode: game.gameCode,
+        gameUrl: game.roomUrl,
+        state: game.state,
+        users: [{
+          id: userId,
+          name: name,
+          symbol: "X"
+        }],
+        currentPlayer: "X"
+      }
+    })
+  } catch (error) {
+    console.error("Error starting game:", error)
+    res.status(500).json({
+      success: false,
+      error: "Failed to create game"
+    })
+  }
+})
+
+// Join an existing game
+app.post("/join", async (req, res) => {
+  try {
+    const result = gameJoinSchema.safeParse(req.body)
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid input",
+        details: result.error.issues
+      })
+    }
+
+    const { name, gameCode } = result.data
+
+    // Find the game by game code
+    const game = await prisma.game.findFirst({
+      where: { gameCode: gameCode },
+      include: { users: true }
+    })
+
+    if (!game) {
+      return res.status(404).json({
+        success: false,
+        error: "Game not found"
+      })
+    }
+
+    // Check if game is full
+    if (game.users.length >= 2) {
+      return res.status(400).json({
+        success: false,
+        error: "Game is full"
+      })
+    }
+
+    // Add user to the game
+    const userId = randomUUID()
+    await prisma.user.create({
+      data: {
+        id: userId,
+        name: name,
+        gameId: game.id
+      }
+    })
+
+    // Fetch updated game with all users
+    const updatedGame = await prisma.game.findUnique({
+      where: { id: game.id },
+      include: { users: true }
+    })
+
+    res.json({
+      success: true,
+      user: {
+        id: userId,
+        name: name,
+        symbol: "O" // Second player is always O
+      },
+      game: {
+        gameId: updatedGame!.id,
+        gameCode: updatedGame!.gameCode,
+        gameUrl: updatedGame!.roomUrl,
+        state: updatedGame!.state,
+        users: updatedGame!.users.map((u, idx) => ({
+          id: u.id,
+          name: u.name,
+          symbol: idx === 0 ? "X" : "O"
+        })),
+        currentPlayer: "X"
+      }
+    })
+  } catch (error) {
+    console.error("Error joining game:", error)
+    res.status(500).json({
+      success: false,
+      error: "Failed to join game"
+    })
+  }
+})
+
+// Get game state by ID
+app.get("/score/:gameId", async (req, res) => {
+  try {
+    const { gameId } = req.params
+
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      include: { users: true }
+    })
+
+    if (!game) {
+      return res.status(404).json({
+        success: false,
+        error: "Game not found"
+      })
+    }
+
+    res.json({
+      success: true,
+      game: {
+        gameId: game.id,
+        gameCode: game.gameCode,
+        gameUrl: game.roomUrl,
+        state: game.state,
+        winner: game.winner,
+        users: game.users.map((u, idx) => ({
+          id: u.id,
+          name: u.name,
+          symbol: idx === 0 ? "X" : "O",
+          score: u.score
+        }))
+      }
+    })
+  } catch (error) {
+    console.error("Error fetching game:", error)
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch game"
+    })
+  }
+})
+
+// Get leaderboard - top users by score
+app.get("/leaderboard", async (_req, res) => {
+  try {
+    const topUsers = await prisma.user.findMany({
+      orderBy: {
+        score: 'desc'
+      },
+      take: 10,
+      select: {
+        id: true,
+        name: true,
+        score: true
+      }
+    })
+
+    res.json({
+      success: true,
+      leaderboard: topUsers
+    })
+  } catch (error) {
+    console.error("Error fetching leaderboard:", error)
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch leaderboard"
+    })
+  }
+})
+
+
+export { app };
+

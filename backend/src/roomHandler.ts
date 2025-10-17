@@ -26,7 +26,7 @@ export class RoomHandler {
 
   constructor(userName: string, gameCode: string) {
     const gameId = randomUUID(); // unique game ID for Prisma
-    const baseUrl = process.env.SERVER_URL || "http://localhost:3200";
+    const baseUrl = process.env.SERVER_URL || "http://localhost:3100";
 
     // Create the first user (creator) - always gets X
     const user: User = {
@@ -46,6 +46,28 @@ export class RoomHandler {
       gameUrl: `${baseUrl}/game/${gameCode}`,
       currentPlayer: "X", // X always starts
     };
+  }
+
+  /**
+   * Load existing game state from database
+   */
+  loadFromDatabase(gameId: string, state: string, dbUsers: any[]): void {
+    this.game.gameId = gameId;
+    this.game.state = state;
+
+    // Load users from database
+    this.users = dbUsers.map((u, idx) => ({
+      id: u.id,
+      name: u.name,
+      symbol: idx === 0 ? "X" : "O"
+    }));
+
+    this.game.users = this.users;
+
+    // Calculate current player based on board state
+    const xCount = state.split('').filter(c => c === 'X').length;
+    const oCount = state.split('').filter(c => c === 'O').length;
+    this.game.currentPlayer = xCount <= oCount ? "X" : "O";
   }
 
   /**
@@ -97,10 +119,23 @@ export class RoomHandler {
     console.log(`Game over! Winner: ${winner}`);
 
     try {
+      // Update game with winner
       await prisma.game.update({
         where: { id: this.game.gameId },
         data: { state: this.game.state, winner },
       });
+
+      // If there's a winner (not a draw), increase their score by 100
+      if (winner !== "draw") {
+        const winningUser = this.game.users.find(u => u.symbol === winner);
+        if (winningUser) {
+          await prisma.user.update({
+            where: { id: winningUser.id },
+            data: { score: { increment: 100 } }
+          });
+          console.log(`Increased score for ${winningUser.name} by 100 points`);
+        }
+      }
     } catch (error) {
       console.error(" Error saving result:", error);
     }
@@ -213,9 +248,4 @@ export class RoomHandler {
   }
 }
 
-/**
- * Generate a short 6-character game code
- */
-function generateGameCode(): string {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
+

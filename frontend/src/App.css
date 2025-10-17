@@ -154,9 +154,13 @@
   background: #fff;
   font-size: 2rem;
   font-weight: bold;
+  color: #333;
   cursor: pointer;
   border-radius: 4px;
   transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cell:hover:not(:disabled) {
@@ -214,21 +218,288 @@
   background: #138496;
 }
 
+/* Secondary Button */
+.secondary-btn {
+  background: #2196F3 !important;
+}
+
+.secondary-btn:hover:not(:disabled) {
+  background: #1976D2 !important;
+}
+
+/* Leaderboard Modal */
+.leaderboard-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s;
+}
+
+.leaderboard-content {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s;
+}
+
+.leaderboard-content h2 {
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.leaderboard-list {
+  margin-bottom: 1.5rem;
+}
+
+.leaderboard-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  background: #f9f9f9;
+  border-radius: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.leaderboard-entry:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.leaderboard-entry .rank {
+  font-weight: bold;
+  color: #ff9800;
+  font-size: 1.2rem;
+  min-width: 50px;
+}
+
+.leaderboard-entry .player-name {
+  flex: 1;
+  font-weight: bold;
+  color: #333;
+}
+
+.leaderboard-entry .score {
+  color: #4CAF50;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.close-btn {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  width: 100%;
+  transition: background-color 0.3s;
+}
+
+.close-btn:hover {
+  background: #d32f2f;
+}
+
+/* Game Container with Chat */
+.game-container {
+  display: flex;
+  gap: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.game {
+  flex: 1;
+}
+
+/* Symbol Badges */
+.symbol-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: #e8f5e8;
+  border-radius: 20px;
+  font-weight: bold;
+  color: #2e7d32;
+  margin: 0 0.5rem;
+}
+
+.symbol-badge.active {
+  background: #4CAF50;
+  color: white;
+  animation: pulse 1s infinite;
+}
+
+/* Active Player Indicator */
+.active-player {
+  background: #e3f2fd !important;
+  border: 2px solid #2196F3 !important;
+}
+
+/* Chat Window */
+.chat-window {
+  width: 300px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  height: 500px;
+}
+
+.chat-header {
+  background: #4CAF50;
+  color: white;
+  padding: 1rem;
+  border-radius: 12px 12px 0 0;
+}
+
+.chat-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chat-message {
+  padding: 0.5rem 0.75rem;
+  background: #f0f0f0;
+  border-radius: 8px;
+  word-wrap: break-word;
+  max-width: 80%;
+  animation: slideIn 0.3s;
+}
+
+.chat-message strong {
+  color: #2196F3;
+}
+
+.own-message {
+  align-self: flex-end;
+  background: #e3f2fd;
+}
+
+.chat-input-container {
+  display: flex;
+  padding: 1rem;
+  border-top: 1px solid #ddd;
+  gap: 0.5rem;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.chat-input:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.send-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.send-btn:hover {
+  background: #45a049;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@media (max-width: 768px) {
+  .game-container {
+    flex-direction: column;
+  }
+
+  .chat-window {
+    width: 100%;
+    height: 400px;
+  }
+}
+
 @media (max-width: 480px) {
   .app {
     padding: 1rem;
   }
-  
+
   .game-board {
     max-width: 250px;
   }
-  
+
   .cell {
     width: 60px;
     height: 60px;
     font-size: 1.5rem;
   }
-  
+
   .players {
     flex-direction: column;
     gap: 0.5rem;
