@@ -48,7 +48,7 @@ function App() {
 
   // Initialize socket connection
   useEffect(() => {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3100';
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://tic-tac-toe-production-8519.up.railway.app';
     const newSocket = io(backendUrl);
     setSocket(newSocket);
 
@@ -122,7 +122,7 @@ function App() {
 
   // Fetch leaderboard
   useEffect(() => {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3100';
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://tic-tac-toe-production-8519.up.railway.app';
     const fetchLeaderboard = async () => {
       try {
         const response = await fetch(`${backendUrl}/leaderboard`);
@@ -147,7 +147,7 @@ function App() {
       return;
     }
 
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3100';
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://tic-tac-toe-production-8519.up.railway.app';
     try {
       const response = await fetch(`${backendUrl}/start`, {
         method: 'POST',
@@ -183,10 +183,10 @@ function App() {
       return;
     }
 
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3100';
-    try {
-      const response = await fetch(`${backendUrl}/join`, {
-        method: 'POST',
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://tic-tac-toe-production-8519.up.railway.app';
+      try {
+        const response = await fetch(`${backendUrl}/join`, {
+          method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: playerName.trim(), gameCode: gameCode.trim() })
       });
