@@ -10,7 +10,12 @@ const prisma = new PrismaClient()
 
 // Middleware
 app.use(cors({
-  origin: "https://ajay-games-toe-66.vercel.app/"
+  origin: [
+    "http://localhost:5173",
+    "https://ajay-games-toe-66.vercel.app",
+    "https://tic-tac-269t1wkkb-yarramallaajays-projects.vercel.app"
+  ],
+  credentials: true
 }))
 app.use(Express.json())
 
