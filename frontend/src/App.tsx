@@ -41,14 +41,15 @@ function App() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [message, setMessage] = useState('');
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  // const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [chatOpen, setChatOpen] = useState(true);
 
   // Initialize socket connection
   useEffect(() => {
-    const newSocket = io('http://localhost:3100');
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3100';
+    const newSocket = io(backendUrl);
     setSocket(newSocket);
 
     newSocket.on('room-joined', (data) => {
@@ -121,9 +122,10 @@ function App() {
 
   // Fetch leaderboard
   useEffect(() => {
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3100';
     const fetchLeaderboard = async () => {
       try {
-        const response = await fetch('http://localhost:3100/leaderboard');
+        const response = await fetch(`${backendUrl}/leaderboard`);
         const data = await response.json();
         if (data.success) {
           setLeaderboard(data.leaderboard);
@@ -145,8 +147,9 @@ function App() {
       return;
     }
 
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3100';
     try {
-      const response = await fetch('http://localhost:3100/start', {
+      const response = await fetch(`${backendUrl}/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: playerName.trim() })
@@ -180,8 +183,9 @@ function App() {
       return;
     }
 
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3100';
     try {
-      const response = await fetch('http://localhost:3100/join', {
+      const response = await fetch(`${backendUrl}/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: playerName.trim(), gameCode: gameCode.trim() })
@@ -245,6 +249,25 @@ function App() {
     setMessage('');
     setChatMessages([]);
   };
+  const renderLeaderboard = () => (
+    <div className="leaderboard-content" onClick={(e) => e.stopPropagation()}>
+      <h2>Leaderboard</h2>
+      <div className="leaderboard-list">
+        {leaderboard.length > 0 ? (
+          leaderboard.map((entry, index) => (
+            <div key={entry.id} className="leaderboard-entry">
+              <span className="rank">#{index + 1}</span>
+              <span className="player-name">{entry.name}</span>
+              <span className="score">{entry.score} pts</span>
+            </div>
+          ))
+        ) : (
+          <p>No players yet. Be the first to play!</p>
+        )}
+      </div>
+      {/* <button onClick={() => setShowLeaderboard(false)} className="close-btn">Close</button> */}
+    </div>);
+
 
   const renderBoard = () => {
     if (!currentGame) return null;
@@ -265,28 +288,7 @@ function App() {
     );
   };
 
-  const renderLeaderboard = () => (
-    <div className="leaderboard-modal" onClick={() => setShowLeaderboard(false)}>
-      <div className="leaderboard-content" onClick={(e) => e.stopPropagation()}>
-        <h2>Leaderboard</h2>
-        <div className="leaderboard-list">
-          {leaderboard.length > 0 ? (
-            leaderboard.map((entry, index) => (
-              <div key={entry.id} className="leaderboard-entry">
-                <span className="rank">#{index + 1}</span>
-                <span className="player-name">{entry.name}</span>
-                <span className="score">{entry.score} pts</span>
-              </div>
-            ))
-          ) : (
-            <p>No players yet. Be the first to play!</p>
-          )}
-        </div>
-        <button onClick={() => setShowLeaderboard(false)} className="close-btn">Close</button>
-      </div>
-    </div>
-  );
-
+  
   const renderMenu = () => (
     <div className="menu">
       <h1>Tic Tac Toe</h1>
@@ -319,11 +321,6 @@ function App() {
       <div className="button-group">
         <button onClick={joinGame} disabled={!playerName.trim() || !gameCode.trim()}>
           Join Game
-        </button>
-      </div>
-      <div className="button-group" style={{ marginTop: '2rem' }}>
-        <button onClick={() => setShowLeaderboard(true)} className="secondary-btn">
-          View Leaderboard
         </button>
       </div>
     </div>
@@ -429,9 +426,14 @@ function App() {
         </div>
       )}
 
-      {gameState === 'menu' ? renderMenu() : renderGame()}
-
-      {showLeaderboard && renderLeaderboard()}
+      {gameState === 'menu' ? (
+        <div className="menu-container">
+          {renderMenu()}
+          {renderLeaderboard()}
+        </div>
+      ) : (
+        renderGame()
+      )}
     </div>
   );
 }

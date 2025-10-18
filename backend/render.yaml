@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: tictactoe-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build && npx prisma generate
+    startCommand: npx prisma migrate deploy && node dist/SocketHandler.js
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: NODE_VERSION
+        value: 18.20.4
