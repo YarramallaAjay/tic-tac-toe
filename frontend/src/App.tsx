@@ -336,16 +336,6 @@ function App() {
             <span className="detail-label">Game Code:</span>
             <span className="detail-value">{currentGame?.gameCode}</span>
           </div>
-          <div className="detail-item">
-            <span className="detail-label">You are:</span>
-            <span className="symbol-badge">{currentUser?.symbol}</span>
-          </div>
-          <div className="detail-item">
-            <span className="detail-label">Current Turn:</span>
-            <span className={`symbol-badge ${currentGame?.currentPlayer === currentUser?.symbol ? 'active' : ''}`}>
-              {currentGame?.currentPlayer}
-            </span>
-          </div>
         </div>
 
         <div className="detail-section">
@@ -353,10 +343,12 @@ function App() {
           <div className={`player-item ${currentGame?.currentPlayer === 'X' ? 'active-player' : ''}`}>
             <span className="player-symbol">X</span>
             <span className="player-name">{currentGame?.users.find(u => u.symbol === 'X')?.name || 'Waiting...'}</span>
+            {currentGame?.currentPlayer === 'X' && <span className="current-player-badge">Current Player</span>}
           </div>
           <div className={`player-item ${currentGame?.currentPlayer === 'O' ? 'active-player' : ''}`}>
             <span className="player-symbol">O</span>
             <span className="player-name">{currentGame?.users.find(u => u.symbol === 'O')?.name || 'Waiting...'}</span>
+            {currentGame?.currentPlayer === 'O' && <span className="current-player-badge">Current Player</span>}
           </div>
         </div>
 
