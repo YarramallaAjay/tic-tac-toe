@@ -280,14 +280,14 @@ function App() {
     if (!currentGame) return null;
 
     return (
-      <div className="grid grid-cols-3 gap-3 p-3 bg-white rounded-xl shadow-lg border border-gray-200 w-fit">
+      <div className="inline-grid grid-cols-3 gap-3 p-4 bg-white rounded-xl shadow-lg border border-gray-200">
         {currentGame.state.split('').map((cell, index) => (
           <button
             key={index}
-            className={`w-32 h-32 border-none font-bold text-6xl text-gray-900 cursor-pointer rounded-lg transition-all flex items-center justify-center border-2 ${
+            className={`w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 font-bold text-5xl sm:text-6xl text-gray-900 cursor-pointer rounded-lg transition-all flex items-center justify-center border-2 ${
               cell !== '_'
                 ? 'bg-white border-gray-300'
-                : 'bg-gray-50 border-gray-200 hover:enabled:bg-gray-100 hover:enabled:border-primary hover:enabled:scale-105'
+                : 'bg-gray-50 border-gray-200 hover:enabled:bg-gray-100 hover:enabled:border-primary hover:enabled:scale-[1.02]'
             } disabled:cursor-not-allowed`}
             onClick={() => makeMove(index)}
             disabled={cell !== '_' || gameState !== 'playing' || currentGame.currentPlayer !== currentUser?.symbol}
@@ -348,7 +348,7 @@ function App() {
   );
 
   const renderGame = () => (
-    <div className="grid grid-cols-[300px_1fr] gap-8 max-w-[1000px] mx-auto pr-[370px] items-start">
+    <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8 max-w-[1000px] mx-auto pr-0 lg:pr-[370px] items-start">
       {/* Left Panel - Game Details */}
       <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
         <div className="mb-6">
@@ -382,9 +382,9 @@ function App() {
       </div>
 
       {/* Center Panel - Game Board */}
-      <div>
+      <div className="flex flex-col items-center justify-center">
         {gameState === 'waiting' && (
-          <div className="mt-8 p-8 bg-amber-50 border border-amber-400 rounded-lg text-amber-900 text-center max-w-md">
+          <div className="mb-8 p-8 bg-amber-50 border border-amber-400 rounded-lg text-amber-900 text-center max-w-md">
             <p className="my-2">Waiting for another player to join...</p>
             <p className="my-2">Share this code: <strong className="text-xl text-amber-700">{currentGame?.gameCode}</strong></p>
           </div>
