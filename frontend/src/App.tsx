@@ -348,9 +348,9 @@ function App() {
   );
 
   const renderGame = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8 max-w-[1000px] mx-auto pr-0 lg:pr-[370px] items-start">
-      {/* Left Panel - Game Details */}
-      <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+    <div className="grid grid-cols-1 xl:grid-cols-[1fr_2fr_1fr] gap-6 max-w-[1600px] mx-auto items-start">
+      {/* Left Panel - Game Details (25%) */}
+      <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200 h-fit sticky top-8">
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-3 border-b-2 border-gray-100">Game Info</h3>
           <div className="my-4">
@@ -381,8 +381,8 @@ function App() {
         )}
       </div>
 
-      {/* Center Panel - Game Board */}
-      <div className="flex flex-col items-center justify-center">
+      {/* Center Panel - Game Board (50%) */}
+      <div className="flex flex-col items-center justify-center min-h-[600px]">
         {gameState === 'waiting' && (
           <div className="mb-8 p-8 bg-amber-50 border border-amber-400 rounded-lg text-amber-900 text-center max-w-md">
             <p className="my-2">Waiting for another player to join...</p>
@@ -392,66 +392,106 @@ function App() {
         {renderBoard()}
       </div>
 
-      {/* Right Panel - Chat Window */}
+      {/* Right Panel - Chat Window (25%) */}
       {gameState !== 'waiting' && (
-        <div className={`fixed right-0 top-0 h-screen z-[100] ${chatOpen ? 'w-[350px]' : 'w-auto'}`}>
-          {!chatOpen && (
-            <button
-              className="fixed right-8 top-8 bg-primary text-white border-none py-3 px-5 rounded-lg cursor-pointer font-semibold shadow-lg shadow-primary/30 transition-all z-[100] hover:bg-primary-dark"
-              onClick={() => setChatOpen(true)}
-            >
-              💬
-            </button>
-          )}
-          {chatOpen && (
-            <div className="bg-white shadow-[-4px_0_12px_rgba(0,0,0,0.08)] border-l border-gray-200 flex flex-col h-full w-[350px] overflow-hidden">
-              <div className="bg-gray-50 text-gray-900 py-4 px-6 border-b border-gray-200 flex justify-between items-center">
-                <h3 className="m-0 text-lg font-semibold">Chat</h3>
-                <button
-                  className="bg-transparent border-none text-gray-500 cursor-pointer text-2xl p-1 leading-none transition-colors hover:text-gray-900"
-                  onClick={() => setChatOpen(false)}
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2 bg-gray-50 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded">
-                {chatMessages.map((msg, index) => (
-                  <div
-                    key={index}
-                    className={`py-2.5 px-3.5 rounded-lg border max-w-[85%] break-words ${msg.sender === currentUser?.name ? 'self-end bg-indigo-50 border-indigo-200' : 'bg-white border-gray-200'}`}
-                  >
-                    <strong className="text-primary font-semibold text-sm block mb-1">{msg.sender}:</strong>
-                    <span className="text-gray-900">{msg.message}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex p-4 gap-2 bg-white border-t border-gray-200">
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && sendChatMessage()}
-                  placeholder="Type a message..."
-                  className="flex-1 py-2.5 px-3.5 border-[1.5px] border-gray-300 rounded-lg text-sm transition-all text-gray-900 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
-                />
-                <button
-                  onClick={sendChatMessage}
-                  className="bg-primary text-white border-none py-2.5 px-4 rounded-lg cursor-pointer font-semibold transition-all hover:bg-primary-dark"
-                >
-                  Send
-                </button>
-              </div>
+        <div className="hidden xl:block">
+          <div className="bg-white rounded-xl shadow-md border border-gray-200 flex flex-col h-[600px] overflow-hidden sticky top-8">
+            <div className="bg-gray-50 text-gray-900 py-4 px-6 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="m-0 text-lg font-semibold">Chat</h3>
             </div>
-          )}
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2 bg-gray-50 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded">
+              {chatMessages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`py-2.5 px-3.5 rounded-lg border max-w-[85%] break-words ${msg.sender === currentUser?.name ? 'self-end bg-indigo-50 border-indigo-200' : 'bg-white border-gray-200'}`}
+                >
+                  <strong className="text-primary font-semibold text-sm block mb-1">{msg.sender}:</strong>
+                  <span className="text-gray-900">{msg.message}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex p-4 gap-2 bg-white border-t border-gray-200">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && sendChatMessage()}
+                placeholder="Type a message..."
+                className="flex-1 py-2.5 px-3.5 border-[1.5px] border-gray-300 rounded-lg text-sm transition-all text-gray-900 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+              />
+              <button
+                onClick={sendChatMessage}
+                className="bg-primary text-white border-none py-2.5 px-4 rounded-lg cursor-pointer font-semibold transition-all hover:bg-primary-dark"
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Chat Toggle - Only show on screens smaller than xl */}
+      {gameState !== 'waiting' && (
+        <div className="xl:hidden">
+          <div className={`fixed right-0 top-0 h-screen z-[100] ${chatOpen ? 'w-[350px]' : 'w-auto'}`}>
+            {!chatOpen && (
+              <button
+                className="fixed right-8 top-8 bg-primary text-white border-none py-3 px-5 rounded-lg cursor-pointer font-semibold shadow-lg shadow-primary/30 transition-all z-[100] hover:bg-primary-dark"
+                onClick={() => setChatOpen(true)}
+              >
+                💬
+              </button>
+            )}
+            {chatOpen && (
+              <div className="bg-white shadow-[-4px_0_12px_rgba(0,0,0,0.08)] border-l border-gray-200 flex flex-col h-full w-[350px] overflow-hidden">
+                <div className="bg-gray-50 text-gray-900 py-4 px-6 border-b border-gray-200 flex justify-between items-center">
+                  <h3 className="m-0 text-lg font-semibold">Chat</h3>
+                  <button
+                    className="bg-transparent border-none text-gray-500 cursor-pointer text-2xl p-1 leading-none transition-colors hover:text-gray-900"
+                    onClick={() => setChatOpen(false)}
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2 bg-gray-50 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded">
+                  {chatMessages.map((msg, index) => (
+                    <div
+                      key={index}
+                      className={`py-2.5 px-3.5 rounded-lg border max-w-[85%] break-words ${msg.sender === currentUser?.name ? 'self-end bg-indigo-50 border-indigo-200' : 'bg-white border-gray-200'}`}
+                    >
+                      <strong className="text-primary font-semibold text-sm block mb-1">{msg.sender}:</strong>
+                      <span className="text-gray-900">{msg.message}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex p-4 gap-2 bg-white border-t border-gray-200">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && sendChatMessage()}
+                    placeholder="Type a message..."
+                    className="flex-1 py-2.5 px-3.5 border-[1.5px] border-gray-300 rounded-lg text-sm transition-all text-gray-900 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+                  />
+                  <button
+                    onClick={sendChatMessage}
+                    className="bg-primary text-white border-none py-2.5 px-4 rounded-lg cursor-pointer font-semibold transition-all hover:bg-primary-dark"
+                  >
+                    Send
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
   );
 
   return (
-    <div className="max-w-[1400px] mx-auto p-8 min-h-screen">
+    <div className="w-full mx-auto p-4 md:p-8 min-h-screen bg-gray-50">
       {message && (
-        <div className={`bg-white text-gray-900 border border-gray-300 rounded-lg py-4 px-6 mb-6 font-medium shadow-sm ${
+        <div className={`bg-white text-gray-900 border border-gray-300 rounded-lg py-4 px-6 mb-6 font-medium shadow-sm max-w-[1600px] mx-auto ${
           gameState === 'game-over' ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-primary'
         }`}>
           {message}
@@ -459,7 +499,7 @@ function App() {
       )}
 
       {gameState === 'menu' ? (
-        <div className="grid grid-cols-2 gap-8 max-w-[1000px] mx-auto my-16 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-[1000px] mx-auto my-16 items-start">
           {renderMenu()}
           {renderLeaderboard()}
         </div>
