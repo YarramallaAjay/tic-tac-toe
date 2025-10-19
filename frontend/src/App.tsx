@@ -280,11 +280,11 @@ function App() {
     if (!currentGame) return null;
 
     return (
-      <div className="grid grid-cols-3 grid-rows-3 gap-3 p-3 bg-white rounded-xl shadow-lg border border-gray-200">
+      <div className="grid grid-cols-3 gap-3 p-3 bg-white rounded-xl shadow-lg border border-gray-200 w-fit">
         {currentGame.state.split('').map((cell, index) => (
           <button
             key={index}
-            className={`w-[150px] h-[150px] border-none font-bold text-6xl text-gray-900 cursor-pointer rounded-lg transition-all flex items-center justify-center border-2 ${
+            className={`w-32 h-32 border-none font-bold text-6xl text-gray-900 cursor-pointer rounded-lg transition-all flex items-center justify-center border-2 ${
               cell !== '_'
                 ? 'bg-white border-gray-300'
                 : 'bg-gray-50 border-gray-200 hover:enabled:bg-gray-100 hover:enabled:border-primary hover:enabled:scale-105'
